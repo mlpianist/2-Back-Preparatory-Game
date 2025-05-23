@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piano Memory Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 900px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .title {
+            font-size: 3em;
+            font-weight: 300;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .start-screen {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .instructions {
+            text-align: left;
+            margin: 30px 0;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #333;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,215,0,0.4);
+        }
+
+        .game-screen {
+            display: none;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .score, .round {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .feedback-light {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            border: 3px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .feedback-light.correct {
+            background: #4CAF50;
+            box-shadow: 0 0 20px #4CAF50;
+        }
+
+        .feedback-light.incorrect {
+            background: #F44336;
+            box-shadow: 0 0 20px #F44336;
+        }
+
+        .piano-container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            display: inline-block;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .piano {
+            position: relative;
+            display: flex;
+            height: 200px;
+            width: 588px;
+        }
+
+        .white-key {
+            width: 40px;
+            height: 200px;
+            background: white;
+            border: 2px solid #ccc;
+            margin-right: 2px;
+            border-radius: 0 0 8px 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .white-key:last-child {
+            margin-right: 0;
+        }
+
+        .black-key {
+            width: 28px;
+            height: 120px;
+            background: #333;
+            position: absolute;
+            border-radius: 0 0 6px 6px;
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            top: 0;
+        }
+
+        .key.highlighted {
+            background: #FF4444 !important;
+            box-shadow: 0 0 20px #FF4444;
+            transform: scale(1.05);
+        }
+
+        .black-key.highlighted {
+            background: #CC0000 !important;
+        }
+
+        .black-key[data-key="C#"] { left: 26px; }
+        .black-key[data-key="D#"] { left: 68px; }
+        .black-key[data-key="F#"] { left: 152px; }
+        .black-key[data-key="G#"] { left: 194px; }
+        .black-key[data-key="A#"] { left: 236px; }
+        .black-key[data-key="C#2"] { left: 320px; }
+        .black-key[data-key="D#2"] { left: 362px; }
+        .black-key[data-key="F#2"] { left: 446px; }
+        .black-key[data-key="G#2"] { left: 488px; }
+        .black-key[data-key="A#2"] { left: 530px; }
+
+        .instruction-text {
+            margin-top: 30px;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .results-screen {
+            display: none;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .final-score {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #FFD700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .performance-text {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+        }
+
+        .piano-container.hidden {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="startScreen" class="start-screen">
+            <h1 class="title">Piano Memory Game</h1>
+            <p class="subtitle">Test your musical memory with this 2-back task</p>
+            <div class="instructions">
+                <h3>How to Play:</h3>
+                <ul>
+                    <li>You'll see a piano keyboard with <strong>1 key</strong> highlighted in red</li> <!-- Changed from 2 keys -->
+                    <li>Each keyboard is shown for 1 second, then disappears for 2 seconds</li>
+                    <li>If the current keyboard matches the one from <strong>two keyboards ago</strong>, press the <strong>SPACEBAR</strong></li>
+                    <li>If they don't match, just wait for the next keyboard</li>
+                    <li>Green light = correct, Red light = incorrect</li>
+                    <li>Complete 30 rounds to see your final score</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="startGame()">Start Game</button>
+        </div>
+
+        <div id="gameScreen" class="game-screen">
+            <div class="game-info">
+                <div class="score">Score: <span id="scoreValue">0</span>%</div>
+                <div class="round">Round: <span id="roundValue">1</span>/30</div>
+            </div>
+            <div class="feedback-light" id="feedbackLight"></div>
+            <div class="piano-container" id="pianoContainer">
+                <div class="piano" id="piano">
+                    <div class="white-key key" data-key="C"></div>
+                    <div class="white-key key" data-key="D"></div>
+                    <div class="white-key key" data-key="E"></div>
+                    <div class="white-key key" data-key="F"></div>
+                    <div class="white-key key" data-key="G"></div>
+                    <div class="white-key key" data-key="A"></div>
+                    <div class="white-key key" data-key="B"></div>
+                    <div class="white-key key" data-key="C2"></div>
+                    <div class="white-key key" data-key="D2"></div>
+                    <div class="white-key key" data-key="E2"></div>
+                    <div class="white-key key" data-key="F2"></div>
+                    <div class="white-key key" data-key="G2"></div>
+                    <div class="white-key key" data-key="A2"></div>
+                    <div class="white-key key" data-key="B2"></div>
+                    <div class="black-key key" data-key="C#"></div>
+                    <div class="black-key key" data-key="D#"></div>
+                    <div class="black-key key" data-key="F#"></div>
+                    <div class="black-key key" data-key="G#"></div>
+                    <div class="black-key key" data-key="A#"></div>
+                    <div class="black-key key" data-key="C#2"></div>
+                    <div class="black-key key" data-key="D#2"></div>
+                    <div class="black-key key" data-key="F#2"></div>
+                    <div class="black-key key" data-key="G#2"></div>
+                    <div class="black-key key" data-key="A#2"></div>
+                </div>
+            </div>
+            <div class="instruction-text">
+                Press <strong>SPACEBAR</strong> if this key matches the one from two keyboards ago
+            </div> <!-- Changed from "keyboard" to "key" -->
+        </div>
+
+        <div id="resultsScreen" class="results-screen">
+            <h2 class="title">Game Complete!</h2>
+            <div class="final-score" id="finalScore">0%</div>
+            <div class="performance-text" id="performanceText">Great job!</div>
+            <button class="btn" onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            currentRound: 0,
+            score: 0,
+            correctAnswers: 0,
+            totalRounds: 30,
+            currentPattern: [],
+            patternHistory: [],
+            awaitingResponse: false,
+            responseWindow: false,
+            spacebarPressed: false
+        };
+
+        const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C2', 'C#2', 'D2', 'D#2', 'E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2'];
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            resetGame();
+            nextRound();
+        }
+
+        function resetGame() {
+            gameState = {
+                currentRound: 0,
+                score: 0,
+                correctAnswers: 0,
+                totalRounds: 30,
+                currentPattern: [],
+                patternHistory: [],
+                awaitingResponse: false,
+                responseWindow: false,
+                spacebarPressed: false
+            };
+            updateDisplay();
+        }
+
+        function generatePattern() {
+            if (gameState.currentRound >= 2 && gameState.patternHistory.length >= 2 && Math.random() < 0.33) {
+                return [...gameState.patternHistory[0]]; // Reuse pattern from two rounds ago
+            }
+            
+            const pattern = [];
+            const availableKeys = [...keys];
+            
+            // Select 1 random key instead of 2
+            const randomIndex = Math.floor(Math.random() * availableKeys.length);
+            pattern.push(availableKeys.splice(randomIndex, 1)[0]);
+            
+            return pattern;
+        }
+
+        function highlightKeys(pattern) {
+            clearHighlights();
+            pattern.forEach(keyName => {
+                const keyElement = document.querySelector(`[data-key="${keyName}"]`);
+                if (keyElement) {
+                    keyElement.classList.add('highlighted');
+                }
+            });
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.key').forEach(key => {
+                key.classList.remove('highlighted');
+            });
+        }
+
+        function patternsMatch(pattern1, pattern2) {
+            if (pattern1.length !== pattern2.length) return false;
+            const sorted1 = [...pattern1].sort();
+            const sorted2 = [...pattern2].sort();
+            return sorted1.every((key, index) => key === sorted2[index]);
+        }
+
+        function nextRound() {
+            gameState.currentRound++;
+            updateDisplay();
+
+            if (gameState.currentRound > gameState.totalRounds) {
+                endGame();
+                return;
+            }
+
+            gameState.currentPattern = generatePattern();
+            
+            const shouldMatch = gameState.currentRound >= 3 && gameState.patternHistory.length >= 2 && 
+                               patternsMatch(gameState.currentPattern, gameState.patternHistory[0]);
+            gameState.awaitingResponse = shouldMatch;
+
+            const pianoContainer = document.getElementById('pianoContainer');
+            pianoContainer.classList.remove('hidden');
+            highlightKeys(gameState.currentPattern);
+            gameState.responseWindow = true;
+
+            setTimeout(() => {
+                pianoContainer.classList.add('hidden');
+                clearHighlights();
+            }, 1000);
+
+            setTimeout(() => {
+                gameState.responseWindow = false;
+                
+                if (gameState.currentRound >= 3) {
+                    if (!gameState.spacebarPressed) {
+                        const correct = !shouldMatch;
+                        if (correct) {
+                            gameState.correctAnswers++;
+                        }
+                    }
+                }
+                
+                const scoredRounds = Math.max(0, gameState.currentRound - 2);
+                gameState.score = scoredRounds > 0 ? Math.round((gameState.correctAnswers / scoredRounds) * 100) : 0;
+                updateDisplay();
+                
+                gameState.patternHistory.push([...gameState.currentPattern]);
+                if (gameState.patternHistory.length > 2) {
+                    gameState.patternHistory.shift();
+                }
+                
+                gameState.spacebarPressed = false;
+
+                setTimeout(() => {
+                    clearFeedback();
+                    if (gameState.currentRound < gameState.totalRounds) {
+                        nextRound();
+                    } else {
+                        endGame();
+                    }
+                }, 500);
+            }, 3000);
+        }
+
+        function processResponse(spacebarPressed) {
+            if (!gameState.responseWindow || gameState.currentRound < 3) return;
+            
+            gameState.spacebarPressed = true;
+            const shouldHavePressed = gameState.awaitingResponse;
+            const correct = spacebarPressed === shouldHavePressed;
+            
+            if (correct) {
+                gameState.correctAnswers++;
+            }
+            
+            showFeedback(correct);
+        }
+
+        function showFeedback(correct) {
+            const light = document.getElementById('feedbackLight');
+            light.classList.remove('correct', 'incorrect');
+            light.classList.add(correct ? 'correct' : 'incorrect');
+        }
+
+        function clearFeedback() {
+            const light = document.getElementById('feedbackLight');
+            light.classList.remove('correct', 'incorrect');
+        }
+
+        function updateDisplay() {
+            document.getElementById('scoreValue').textContent = gameState.score;
+            document.getElementById('roundValue').textContent = gameState.currentRound;
+        }
+
+        function endGame() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('resultsScreen').style.display = 'block';
+            
+            const scoredRounds = gameState.totalRounds - 2;
+            const finalScore = scoredRounds > 0 ? Math.round((gameState.correctAnswers / scoredRounds) * 100) : 0;
+            document.getElementById('finalScore').textContent = finalScore + '%';
+            
+            let performanceText = '';
+            if (finalScore >= 90) performanceText = 'Outstanding! Perfect musical memory!';
+            else if (finalScore >= 80) performanceText = 'Excellent work! Great musical memory!';
+            else if (finalScore >= 70) performanceText = 'Good job! Keep practicing!';
+            else if (finalScore >= 60) performanceText = 'Not bad! Room for improvement!';
+            else performanceText = 'Keep practicing to improve your memory!';
+            
+            document.getElementById('performanceText').textContent = performanceText;
+        }
+
+        function restartGame() {
+            document.getElementById('resultsScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                if (gameState.responseWindow && gameState.currentRound >= 3) {
+                    processResponse(true);
+                }
+            }
+        });
+
+        window.addEventListener('keydown', function(e) {
+            if(e.keyCode === 32 && e.target === document.body) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
